@@ -162,4 +162,4 @@ class Agent():
         self.performance_log.append(success_rate)
 
         # Save log
-        cpickle.dump(self.performance_log,open("performance_log.p","wb"))
+        cpickle.dump(self.performance_log,open("six_layers.p","wb"))
