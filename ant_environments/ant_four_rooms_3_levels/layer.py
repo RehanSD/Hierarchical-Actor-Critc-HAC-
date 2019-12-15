@@ -4,6 +4,8 @@ from actor import Actor
 from critic import Critic
 from time import sleep
 
+NUM_BATCH = 60
+num_eps = 100
 class Layer():
     def __init__(self, layer_number, FLAGS, env, sess, agent_params):
         self.layer_number = layer_number
@@ -18,7 +20,8 @@ class Layer():
 
         self.current_state = None
         self.goal = None
-
+        
+        self.total_episodes = -1
         # Initialize Replay Buffer.  Below variables determine size of replay buffer.
 
         # Ceiling on buffer size
@@ -264,8 +267,20 @@ class Layer():
 
     # Create transition penalizing subgoal if necessary.  The target Q-value when this transition is used will ignore next state as the finished boolena = True.  Change the finished boolean to False, if you would like the subgoal penalty to depend on the next state.
     def penalize_subgoal(self, subgoal, next_state, high_level_goal_achieved):
+        disc = 1
+        if self.total_episodes >= 0:
+            if self.total_episodes/(NUM_BATCH * num_eps) <= 0.2:
+                disc = 0.2
+            elif self.total_episodes/(NUM_BATCH * num_eps) <= 0.4:
+                disc = 0.4
+            elif self.total_episodes/(NUM_BATCH * num_eps) <= 0.6:
+                disc = 0.6
+            elif self.total_episodes/(NUM_BATCH * num_eps) <= 0.8:
+                disc = 0.8
+            else:
+                disc = 1
 
-        transition = [self.current_state, subgoal, self.subgoal_penalty, next_state, self.goal, True, None]
+        transition = [self.current_state, subgoal, disc * self.subgoal_penalty, next_state, self.goal, True, None]
 
         if self.FLAGS.all_trans or self.FLAGS.penalty:
             print("Level %d Penalty Trans: " % self.layer_number, transition)
@@ -300,9 +315,11 @@ class Layer():
 
 
     # Learn to achieve goals with actions belonging to appropriate time scale.  "goal_array" contains the goal states for the current layer and all higher layers
-    def train(self, agent, env, subgoal_test = False, episode_num = None):
+    def train(self, agent, env, subgoal_test = False, episode_num = None, total_episode = None):
 
         # print("\nTraining Layer %d" % self.layer_number)
+        if total_episode is not None:
+            self.total_episodes = total_episode
 
         # Set layer's current state and new goal state
         self.goal = agent.goal_array[self.layer_number]
