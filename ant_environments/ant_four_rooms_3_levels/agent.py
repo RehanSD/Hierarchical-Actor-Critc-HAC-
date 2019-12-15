@@ -145,7 +145,7 @@ class Agent():
         self.steps_taken = 0
 
         # Train for an episode
-        goal_status, max_lay_achieved = self.layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num)
+        goal_status, max_lay_achieved = self.layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num, total_episode)
 
         # Update actor/critic networks if not testing
         if not self.FLAGS.test and total_episodes > 30:
