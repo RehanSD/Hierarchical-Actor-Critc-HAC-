@@ -280,7 +280,7 @@ class Layer():
     # Create transition penalizing subgoal if necessary.  The target Q-value when this transition is used will ignore next state as the finished boolena = True.  Change the finished boolean to False, if you would like the subgoal penalty to depend on the next state.
     def penalize_subgoal(self, subgoal, next_state, high_level_goal_achieved):
 
-        transition = [self.current_state, subgoal, disc * self.subgoal_penalty, next_state, self.goal, True, None]
+        transition = [self.current_state, subgoal, self.subgoal_penalty, next_state, self.goal, True, None]
 
         if self.FLAGS.all_trans or self.FLAGS.penalty:
             print("Level %d Penalty Trans: " % self.layer_number, transition)
