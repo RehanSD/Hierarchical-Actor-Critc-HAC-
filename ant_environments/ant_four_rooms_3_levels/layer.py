@@ -130,8 +130,20 @@ class Layer():
 
                 action_type = "Random"
 
+            disc = 1
+            if self.total_episodes >= 0:
+                if self.total_episodes/(NUM_BATCH * num_eps) <= 0.2:
+                    disc = 0.2
+                elif self.total_episodes/(NUM_BATCH * num_eps) <= 0.4:
+                    disc = 0.4
+                elif self.total_episodes/(NUM_BATCH * num_eps) <= 0.6:
+                    disc = 0.6
+                elif self.total_episodes/(NUM_BATCH * num_eps) <= 0.8:
+                    disc = 0.8
+                else:
+                    disc = 1
             # Determine whether to test upcoming subgoal
-            if np.random.random_sample() < agent.subgoal_test_perc:
+            if np.random.random_sample() < (disc * agent.subgoal_test_perc):
                 next_subgoal_test = True
             else:
                 next_subgoal_test = False
