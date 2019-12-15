@@ -356,7 +356,7 @@ class Layer():
 
                 agent.goal_array[self.layer_number - 1] = action
 
-                goal_status, max_lay_achieved = agent.layers[self.layer_number - 1].train(agent, env, next_subgoal_test, episode_num)
+                goal_status, max_lay_achieved = agent.layers[self.layer_number - 1].train(agent, env, next_subgoal_test, episode_num, total_episode)
 
             # If layer is bottom level, execute low-level action
             else:
