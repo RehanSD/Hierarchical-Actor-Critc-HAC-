@@ -14,7 +14,7 @@ class Critic():
         self.q_limit = -FLAGS.time_scale
 
         # Dimensions of goal placeholder will differ depending on layer level
-        if layer_number == FLAGS.layers || layer_number == FLAGS.layers + 10:
+        if layer_number == FLAGS.layers or layer_number == FLAGS.layers + 10:
             self.goal_dim = env.end_goal_dim
         else:
             self.goal_dim = env.subgoal_dim
@@ -25,7 +25,7 @@ class Critic():
         self.goal_ph = tf.placeholder(tf.float32, shape=(None, self.goal_dim))
 
         # Dimensions of action placeholder will differ depending on layer level
-        if layer_number == 0 || layer_number == 10:
+        if layer_number == 0 or layer_number == 10:
             action_dim = env.action_dim
         else:
             action_dim = env.subgoal_dim
