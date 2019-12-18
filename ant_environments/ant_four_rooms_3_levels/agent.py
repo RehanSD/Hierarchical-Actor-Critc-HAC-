@@ -105,14 +105,13 @@ class Agent():
 
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
-
+        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers,self.FLAGS,self.env,self.sess,self.other_params)
          # Initialize actor/critic networks
         self.sess.run(tf.global_variables_initializer())
 
         # If not retraining, restore weights
         # if we are not retraining from scratch, just restore weights
         self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
-        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers,self.FLAGS,self.env,self.sess,self.other_params)
             
 
     # Save neural network parameters
