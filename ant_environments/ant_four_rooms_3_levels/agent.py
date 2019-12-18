@@ -17,7 +17,8 @@ class Agent():
         self.subgoal_test_perc = agent_params["subgoal_test_perc"]
 
         # Create agent with number of levels specified by user
-        self.layers = [Layer(i,FLAGS,env,self.sess,agent_params) for i in range(FLAGS.layers)]
+        self.layers = [Layer(i + 10,FLAGS,env,self.sess,agent_params) for i in range(FLAGS.layers)]
+        self.copy_layers = [Layer(i,FLAGS,env,self.sess,agent_params) for i in range(FLAGS.layers)]
 
         # Below attributes will be used help save network parameters
         self.saver = None
@@ -106,12 +107,13 @@ class Agent():
         if not os.path.exists(self.model_dir):
             os.makedirs(self.model_dir)
         self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers,self.FLAGS,self.env,self.sess,self.other_params)
+        self.copy_layers[self.FLAGS.layers - 1] = self.layers[self.FLAGS.layers - 1]
          # Initialize actor/critic networks
         self.sess.run(tf.global_variables_initializer())
 
         # If not retraining, restore weights
         # if we are not retraining from scratch, just restore weights
-        # self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
+        self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
             
 
     # Save neural network parameters
@@ -144,13 +146,14 @@ class Agent():
 
         # Train for an episode
         goal_status, max_lay_achieved, success_rate = self.layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num)
+        goal1_status, max1_lay_achieved, success1_rate = self.copy_layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num)
 
         # Update actor/critic networks if not testing
         if not self.FLAGS.test and total_episodes > 30:
             self.learn()
 
         # Return whether end goal was achieved
-        return goal_status[self.FLAGS.layers-1], success_rate
+        return goal_status[self.FLAGS.layers-1], success1_rate
 
 
     # Save performance evaluations

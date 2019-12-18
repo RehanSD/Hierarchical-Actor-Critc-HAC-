@@ -17,7 +17,7 @@ class Actor():
         self.sess = sess
 
         # Determine range of actor network outputs.  This will be used to configure outer layer of neural network
-        if layer_number == 0:
+        if layer_number == 0 || layer_number == 10:
             self.action_space_bounds = env.action_bounds
             self.action_offset = env.action_offset
         else:
@@ -26,7 +26,7 @@ class Actor():
             self.action_offset = env.subgoal_bounds_offset
 
         # Dimensions of action will depend on layer level
-        if layer_number == 0:
+        if layer_number == 0 || layer_number == 10:
             self.action_space_size = env.action_dim
         else:
             self.action_space_size = env.subgoal_dim
@@ -34,7 +34,7 @@ class Actor():
         self.actor_name = 'actor_' + str(layer_number)
 
         # Dimensions of goal placeholder will differ depending on layer level
-        if layer_number >= FLAGS.layers - 1:
+        if layer_number == FLAGS.layers || layer_number == FLAGS.layers + 10:
             self.goal_dim = env.end_goal_dim
         else:
             self.goal_dim = env.subgoal_dim

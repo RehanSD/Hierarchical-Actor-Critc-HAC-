@@ -12,7 +12,8 @@ class Layer():
         self.act_layer_num = layer_number
         if layer_number == self.FLAGS.layers:
             self.act_layer_num -= 1
-
+        if layer_number >= 10:
+            self.act_layer_num -= 10
         # Set time limit for each layer.  If agent uses only 1 layer, time limit is the max number of low-level actions allowed in the episode (i.e, env.max_actions).
         if FLAGS.layers > 1:
             self.time_limit = FLAGS.time_scale
@@ -34,15 +35,13 @@ class Layer():
         self.num_replay_goals = 2
 
         # Number of the transitions created for each attempt (i.e, action replay + goal replay + subgoal testing)
-        if self.layer_number == 0:
+        if self.act_layer_num == 0:
             self.trans_per_attempt = (1 + self.num_replay_goals) * self.time_limit
         else:
             self.trans_per_attempt = (1 + self.num_replay_goals) * self.time_limit + int(self.time_limit/3)
 
         # Buffer size = transitions per attempt * # attempts per episode * num of episodes stored
         exponent = self.FLAGS.layers-1 - self.act_layer_num
-        if self.layer_number == self.FLAGS.layers:
-            exponent = 0
         self.buffer_size = min(self.trans_per_attempt * self.time_limit**(exponent) * self.episodes_to_store, self.buffer_size_ceiling)
 
         # self.buffer_size = 10000000
@@ -58,7 +57,7 @@ class Layer():
 
         # Parameter determines degree of noise added to actions during training
         # self.noise_perc = noise_perc
-        if self.layer_number == 0:
+        if self.act_layer_num == 0:
             self.noise_perc = agent_params["atomic_noise"]
         else:
             self.noise_perc = agent_params["subgoal_noise"]
@@ -74,7 +73,7 @@ class Layer():
     def add_noise(self,action, env):
 
         # Noise added will be percentage of range
-        if self.layer_number == 0:
+        if self.act_layer_num == 0:
             action_bounds = env.action_bounds
             action_offset = env.action_offset
         else:
@@ -96,14 +95,14 @@ class Layer():
     # Select random action
     def get_random_action(self, env):
 
-        if self.layer_number == 0:
+        if self.act_layer_num == 0:
             action = np.zeros((env.action_dim))
         else:
             action = np.zeros((env.subgoal_dim))
 
         # Each dimension of random action should take some value in the dimension's range
         for i in range(len(action)):
-            if self.layer_number == 0:
+            if self.act_layer_num == 0:
                 action[i] = np.random.uniform(-env.action_bounds[i] + env.action_offset[i], env.action_bounds[i] + env.action_offset[i])
             else:
                 action[i] = np.random.uniform(env.subgoal_bounds[i][0],env.subgoal_bounds[i][1])
@@ -160,7 +159,7 @@ class Layer():
         transition = [self.current_state, hindsight_action, reward, next_state, self.goal, finished, None]
 
         if self.FLAGS.all_trans or self.FLAGS.hind_action:
-            print("\nLevel %d Hindsight Action: " % self.layer_number, transition)
+            print("\nLevel %d Hindsight Action: " % self.act_layer_num, transition)
 
         # Add action replay transition to layer's replay buffer
         self.replay_buffer.add(np.copy(transition))
@@ -179,13 +178,13 @@ class Layer():
         transition = [self.current_state, hindsight_action, None, next_state, None, None, hindsight_goal]
 
         if self.FLAGS.all_trans or self.FLAGS.prelim_HER:
-            print("\nLevel %d Prelim HER: " % self.layer_number, transition)
+            print("\nLevel %d Prelim HER: " % self.act_layer_num, transition)
 
         self.temp_goal_replay_storage.append(np.copy(transition))
 
         """
         # Designer can create some additional goal replay transitions.  For instance, higher level transitions can be replayed with the subgoal achieved in hindsight as the original goal.
-        if self.layer_number > 0:
+        if self.act_layer_num > 0:
             transition_b = [self.current_state, hindsight_action, 0, next_state, hindsight_goal, True, None]
             # print("\nGoal Replay B: ", transition_b)
             self.replay_buffer.add(np.copy(transition_b))
@@ -223,7 +222,7 @@ class Layer():
 
 
         if self.FLAGS.all_trans or self.FLAGS.HER:
-            print("\n\nPerforming Goal Replay for Level %d\n\n" % self.layer_number)
+            print("\n\nPerforming Goal Replay for Level %d\n\n" % self.act_layer_num)
             print("Num Trans: ", num_trans, ", Num Replay Goals: ", num_replay_goals)
 
 
@@ -275,7 +274,7 @@ class Layer():
         transition = [self.current_state, subgoal, self.subgoal_penalty, next_state, self.goal, True, None]
 
         if self.FLAGS.all_trans or self.FLAGS.penalty:
-            print("Level %d Penalty Trans: " % self.layer_number, transition)
+            print("Level %d Penalty Trans: " % self.act_layer_num, transition)
 
         self.replay_buffer.add(np.copy(transition))
 
@@ -309,7 +308,7 @@ class Layer():
     # Learn to achieve goals with actions belonging to appropriate time scale.  "goal_array" contains the goal states for the current layer and all higher layers
     def train(self, agent, env, subgoal_test = False, episode_num = None):
 
-        # print("\nTraining Layer %d" % self.layer_number)
+        # print("\nTraining Layer %d" % self.act_layer_num)
 
         # Set layer's current state and new goal state
         self.goal = agent.goal_array[self.act_layer_num]
@@ -319,7 +318,7 @@ class Layer():
         self.maxed_out = False
 
         # Display all subgoals if visualizing training and current layer is bottom layer
-        if self.layer_number == 0 and agent.FLAGS.show and agent.FLAGS.layers > 1:
+        if self.act_layer_num == 0 and agent.FLAGS.show and agent.FLAGS.layers > 1:
             env.display_subgoals(agent.goal_array)
             # env.sim.data.mocap_pos[3] = env.project_state_to_end_goal(env.sim,self.current_state)
             # print("Subgoal Pos: ", env.sim.data.mocap_pos[1])
@@ -334,16 +333,16 @@ class Layer():
             action, action_type, next_subgoal_test = self.choose_action(agent, env, subgoal_test)
 
             if self.FLAGS.Q_values:
-                # print("\nLayer %d Action: " % self.layer_number, action)
-                print("Layer %d Q-Value: " % self.layer_number, self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(action,(1,len(action)))))
+                # print("\nLayer %d Action: " % self.act_layer_num, action)
+                print("Layer %d Q-Value: " % self.act_layer_num, self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(action,(1,len(action)))))
                 if self.act_layer_num == 2:
                     test_action = np.copy(action)
                     test_action[:3] = self.goal
-                    print("Layer %d Goal Q-Value: " % self.layer_number, self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(test_action,(1,len(test_action)))))
+                    print("Layer %d Goal Q-Value: " % self.act_layer_num, self.critic.get_Q_value(np.reshape(self.current_state,(1,len(self.current_state))), np.reshape(self.goal,(1,len(self.goal))), np.reshape(test_action,(1,len(test_action)))))
 
 
             # If next layer is not bottom level, propose subgoal for next layer to achieve and determine whether that subgoal should be tested
-            if self.layer_number > 0:
+            if self.act_layer_num > 0:
 
                 agent.goal_array[self.act_layer_num - 1] = action
 
@@ -373,7 +372,7 @@ class Layer():
             if goal_status[self.act_layer_num]:
                 if self.act_layer_num < agent.FLAGS.layers - 1:
                     print("SUBGOAL ACHIEVED")
-                print("\nEpisode %d, Layer %d, Attempt %d Goal Achieved" % (episode_num, self.layer_number, attempts_made))
+                print("\nEpisode %d, Layer %d, Attempt %d Goal Achieved" % (episode_num, self.act_layer_num, attempts_made))
                 print("Goal: ", self.goal)
                 if self.act_layer_num == agent.FLAGS.layers - 1:
                     print("Hindsight Goal: ", env.project_state_to_end_goal(env.sim, agent.current_state))
@@ -381,7 +380,7 @@ class Layer():
                     print("Hindsight Goal: ", env.project_state_to_subgoal(env.sim, agent.current_state))
 
             # Perform hindsight learning using action actually executed (low-level action or hindsight subgoal)
-            if self.layer_number == 0:
+            if self.act_layer_num == 0:
                 hindsight_action = action
             else:
                 # If subgoal action was achieved by layer below, use this as hindsight action
@@ -404,14 +403,14 @@ class Layer():
 
 
                 # Penalize subgoals if subgoal testing and subgoal was missed by lower layers after maximum number of attempts
-                if self.layer_number > 0 and next_subgoal_test and agent.layers[self.act_layer_num-1].maxed_out:
+                if self.act_layer_num > 0 and next_subgoal_test and agent.layers[self.act_layer_num-1].maxed_out:
                     self.penalize_subgoal(action, agent.current_state, goal_status[self.act_layer_num])
 
 
             # Print summary of transition
             if agent.FLAGS.verbose:
 
-                print("\nEpisode %d, Level %d, Attempt %d" % (episode_num, self.layer_number,attempts_made))
+                print("\nEpisode %d, Level %d, Attempt %d" % (episode_num, self.act_layer_num,attempts_made))
                 # print("Goal Array: ", agent.goal_array, "Max Lay Achieved: ", max_lay_achieved)
                 print("Old State: ", self.current_state)
                 print("Hindsight Action: ", hindsight_action)
@@ -440,7 +439,7 @@ class Layer():
                 # If goal was not achieved after max number of attempts, set maxed out flag to true
                 if attempts_made >= self.time_limit and not goal_status[self.act_layer_num]:
                     self.maxed_out = True
-                    # print("Layer %d Out of Attempts" % self.layer_number)
+                    # print("Layer %d Out of Attempts" % self.act_layer_num)
 
                 # If not testing, finish goal replay by filling in missing goal and reward values before returning to prior level.
                 if not agent.FLAGS.test:
