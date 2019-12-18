@@ -54,6 +54,7 @@ class Actor():
 
         # Create actor network
         self.infer = self.create_nn(self.features_ph)
+        print(self.actor_name)
 
         # Target network code "repurposed" from Patrick Emani :^)
         self.weights = [v for v in tf.trainable_variables() if self.actor_name in v.op.name]
