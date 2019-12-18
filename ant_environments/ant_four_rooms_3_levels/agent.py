@@ -12,7 +12,7 @@ class Agent():
 
         self.FLAGS = FLAGS
         self.sess = tf.Session()
-
+        self.env = env
         # Set subgoal testing ratio each layer will use
         self.subgoal_test_perc = agent_params["subgoal_test_perc"]
 
@@ -114,7 +114,15 @@ class Agent():
         # if we are not retraining from scratch, just restore weights
         if self.FLAGS.retrain == False:
             self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
-
+        a = self.layers[self.FLAGS.layers - 1]
+        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers - 1,self.FLAGS,self.env,self.sess,self.other_params)
+        print("Og:", a)
+        print("New:", self.layers[self.FLAGS.layers - 1])
+        print("OG Weights:", a.actor.weights)
+        print("New Weights:", self.layers[self.FLAGS.layers - 1].actor.weights)
+        for (b, c) in zip(a.actor.weights, self.layers[self.FLAGS.layers - 1].actor.weights):
+            print("OG == NEW?:", b == c)
+            
 
     # Save neural network parameters
     def save_model(self, episode):
