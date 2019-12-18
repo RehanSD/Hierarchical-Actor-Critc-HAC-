@@ -111,7 +111,7 @@ class Agent():
 
         # If not retraining, restore weights
         # if we are not retraining from scratch, just restore weights
-        self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
+        # self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
             
 
     # Save neural network parameters
