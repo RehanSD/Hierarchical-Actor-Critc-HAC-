@@ -5,12 +5,14 @@
 import pickle as cpickle
 import agent as Agent
 from utils import print_summary
+import pickle as cpickle
+
 
 NUM_BATCH = 1000
 TEST_FREQ = 2
 
 num_test_episodes = 100
-
+successful_subgoals = []
 def run_HAC(FLAGS,env,agent):
 
     # Print task summary
@@ -35,13 +37,14 @@ def run_HAC(FLAGS,env,agent):
 
             # Reset successful episode counter
             successful_episodes = 0
+            success_subgoal = 0
 
         for episode in range(num_episodes):
 
             print("\nBatch %d, Episode %d" % (batch, episode))
 
             # Train for an episode
-            success = agent.train(env, episode, total_episodes)
+            success, rate = agent.train(env, episode, total_episodes)
 
             if success:
                 print("Batch %d, Episode %d End Goal Achieved\n" % (batch, episode))
@@ -49,6 +52,8 @@ def run_HAC(FLAGS,env,agent):
                 # Increment successful episode counter if applicable
                 if mix_train_test and batch % TEST_FREQ == 0:
                     successful_episodes += 1
+                    success_subgoal += rate
+
 
             if FLAGS.train_only or (mix_train_test and batch % TEST_FREQ != 0):
                 total_episodes += 1
@@ -61,8 +66,10 @@ def run_HAC(FLAGS,env,agent):
 
             # Log performance
             success_rate = successful_episodes / num_test_episodes * 100
+            success_subgoal_rate = (success_subgoal / num_test_episodes) * 100
             print("\nTesting Success Rate %.2f%%" % success_rate)
             agent.log_performance(success_rate)
             agent.FLAGS.test = False
-
+            successful_subgoals.append(success_subgoal_rate)
+            cpickle.dump(successful_subgoals,open("subgoal_perf.p","wb"))
             print("\n--- END TESTING ---\n")

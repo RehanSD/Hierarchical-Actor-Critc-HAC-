@@ -111,15 +111,8 @@ class Agent():
 
         # If not retraining, restore weights
         # if we are not retraining from scratch, just restore weights
-        if self.FLAGS.retrain == False:
-            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
-        a = self.layers[self.FLAGS.layers - 1]
-        print("Og:", a)
-        print("New:", self.layers[self.FLAGS.layers - 1])
-        print("OG Weights:", a.actor.weights)
-        print("New Weights:", self.layers[self.FLAGS.layers - 1].actor.weights)
-        for (b, c) in zip(a.actor.weights, self.layers[self.FLAGS.layers - 1].actor.weights):
-            print("OG == NEW?:", b == c)
+        self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
+        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers,self.FLAGS,self.env,self.sess,self.other_params)
             
 
     # Save neural network parameters
@@ -151,14 +144,14 @@ class Agent():
         self.steps_taken = 0
 
         # Train for an episode
-        goal_status, max_lay_achieved = self.layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num)
+        goal_status, max_lay_achieved, success_rate = self.layers[self.FLAGS.layers-1].train(self,env, episode_num = episode_num)
 
         # Update actor/critic networks if not testing
         if not self.FLAGS.test and total_episodes > 30:
             self.learn()
 
         # Return whether end goal was achieved
-        return goal_status[self.FLAGS.layers-1]
+        return goal_status[self.FLAGS.layers-1], success_rate
 
 
     # Save performance evaluations
