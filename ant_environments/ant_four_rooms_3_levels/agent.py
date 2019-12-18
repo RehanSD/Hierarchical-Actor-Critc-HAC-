@@ -110,7 +110,7 @@ class Agent():
         self.copy_layers[self.FLAGS.layers - 1] = self.layers[self.FLAGS.layers - 1]
          # Initialize actor/critic networks
         self.sess.run(tf.global_variables_initializer())
-        vars_to_restore=[v for v in tf.trainable_variables() if "actor" in v.name or "critic" in v.name]
+        vars_to_restore=[v for v in tf.trainable_variables() if ("actor" in v.name or "critic" in v.name) and ("actor_3" not in v.name and "critic_3" not in v.name)]
         self.restorer = tf.train.Saver(vars_to_restore)
         # If not retraining, restore weights
         # if we are not retraining from scratch, just restore weights
