@@ -23,6 +23,7 @@ class Agent():
         self.saver = None
         self.model_dir = None
         self.model_loc = None
+        self.other_params = agent_params
 
         # Initialize actor/critic networks.  Load saved parameters if not retraining
         self.initialize_networks()
@@ -40,9 +41,7 @@ class Agent():
 
         # Below parameters will be used to store performance results
         self.performance_log = []
-
-        self.other_params = agent_params
-
+        
 
     # Determine whether or not each layer's goal was achieved.  Also, if applicable, return the highest level whose goal was achieved.
     def check_goals(self,env):
@@ -115,7 +114,7 @@ class Agent():
         if self.FLAGS.retrain == False:
             self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
         a = self.layers[self.FLAGS.layers - 1]
-        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers - 1,self.FLAGS,self.env,self.sess,self.other_params)
+        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers - 1,self.FLAGS,self.env,self.sess, self.other_params)
         print("Og:", a)
         print("New:", self.layers[self.FLAGS.layers - 1])
         print("OG Weights:", a.actor.weights)
