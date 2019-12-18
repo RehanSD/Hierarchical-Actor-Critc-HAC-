@@ -30,8 +30,8 @@ class Actor():
             self.action_space_size = env.action_dim
         else:
             self.action_space_size = env.subgoal_dim
-
-        self.actor_name = 'actor_' + str(layer_number)
+        if layer_number > 10:
+            self.actor_name = 'bctor_' + str(layer_number)
 
         # Dimensions of goal placeholder will differ depending on layer level
         if layer_number == FLAGS.layers or layer_number == FLAGS.layers + 10:
