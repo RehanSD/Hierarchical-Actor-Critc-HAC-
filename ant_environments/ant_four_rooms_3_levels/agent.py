@@ -114,7 +114,6 @@ class Agent():
         if self.FLAGS.retrain == False:
             self.saver.restore(self.sess, tf.train.latest_checkpoint(self.model_dir))
         a = self.layers[self.FLAGS.layers - 1]
-        self.layers[self.FLAGS.layers - 1] = Layer(self.FLAGS.layers - 1,self.FLAGS,self.env,self.sess, self.other_params)
         print("Og:", a)
         print("New:", self.layers[self.FLAGS.layers - 1])
         print("OG Weights:", a.actor.weights)
